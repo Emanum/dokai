@@ -1,4 +1,4 @@
-<html>
+<html xmlns="http://www.w3.org/1999/html">
 <head>
     <script
             defer
@@ -111,9 +111,8 @@
                 x-show="loading"
                 class="absolute w-full h-full animate-pulse bg-neutral-100 rounded-md"
         ></div>
-        <textarea
-                :value="extractedResult">
-        </textarea>
+        <span x-text="extractedResult"
+              x-show="!loading && extractedResult"></span>
         <img
                 x-show="imageURL"
                 class="rounded-md self-center justify-self-center"
@@ -123,14 +122,13 @@
     </div>
 
 
-
-
-    <button
-            class="w-full items-center justify-center px-4 py-3 text-sm font-medium tracking-wide text-white transition-colors duration-200 rounded-md bg-neutral-950 hover:bg-neutral-900 focus:ring-2 focus:ring-offset-2 focus:ring-neutral-900 focus:shadow-outline focus:outline-none"
-            :disabled="loading"
-            x-show="!loading && imageURL && submittedImageURL"
-            @click="switchDisplay"
-    >Compare</button>
+<!--    <button-->
+<!--            class="w-full items-center justify-center px-4 py-3 text-sm font-medium tracking-wide text-white transition-colors duration-200 rounded-md bg-neutral-950 hover:bg-neutral-900 focus:ring-2 focus:ring-offset-2 focus:ring-neutral-900 focus:shadow-outline focus:outline-none"-->
+<!--            :disabled="loading"-->
+<!--            x-show="!loading && imageURL && submittedImageURL"-->
+<!--            @click="switchDisplay"-->
+<!--    >Compare-->
+<!--    </button>-->
 </div>
 
 <script>
@@ -143,7 +141,7 @@
             submitted: "",
             submittedFeatures: [],
             loading: false,
-            extractedResult: "request not sent yet",
+            extractedResult: "",
             imageURL: "https://i.imgur.com/ASznLND.jpeg",
             submittedImageURL: "",
             recieveImageURL: "",
@@ -152,7 +150,7 @@
             canny: false,
             model: "aniflatmixAnimeFlatColorStyle_v20.safetensors",
             async submitPrompt() {
-                if (!this.init_image){
+                if (!this.init_image) {
                     // if no image is selected, use the default image in imageURL and transform it to a file object
                     const response = await fetch(this.imageURL);
                     const blob = await response.blob();
@@ -181,6 +179,12 @@
                     method: 'POST',
                     body: formData
                 });
+                this.extractedResult = await res.text();
+                this.loading = false;
+
+                // const blob = await res.blob();
+                this.recieveImageURL = URL.createObjectURL(blob);
+                this.imageURL = this.recieveImageURL;
                 this.loading = false;
             },
             handleImageChange(event) {
@@ -193,7 +197,7 @@
                 this.imageURL = this.submittedImageURL;
             },
             switchDisplay() {
-                if(!this.recieveImageURL) return;
+                if (!this.recieveImageURL) return;
                 if (this.imageURL === this.recieveImageURL) {
                     this.imageURL = this.submittedImageURL;
                 } else {

@@ -203,6 +203,14 @@ class Model:
 
         dataset = load_dataset("hf-internal-testing/example-documents", split="test")
         image = dataset[2]["image"]
+        # print type of image
+        #print(f"Type of image: {type(image)}")
+
+        # print type of init_image
+        #print(f"Type of init_image: {type(init_image)}")
+
+        image = init_image
+
 
         # prepare decoder inputs
         task_prompt = "<s_cord-v2>"
