@@ -3,6 +3,8 @@
 A simple demo to demonstrate [OCR-free Document Understanding Transformer
 ](https://arxiv.org/abs/2111.15664). Runs on GPU lambda functions via modal.com
 
+Visit https://emanum--dokai-app.modal.run/ to see the live demo.
+
 
 ## Requirements
 
