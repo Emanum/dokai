@@ -1,0 +1,219 @@
+<html>
+<head>
+    <script
+            defer
+            src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+    ></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>DOKAI</title>
+</head>
+<body x-data="state()">
+<div class="max-w-3xl mx-auto pt-4 pb-8 px-10 sm:py-12 sm:px-6 lg:px-8">
+    <h2 class="text-3xl font-medium text-center mb-1">
+        Stable Style Transfer
+    </h2>
+
+    <p class="text-m font-medium text-center mb-5">
+        The request will take ~1 minute to process. After submitting a loading indicator will appear.
+    </p>
+
+    <form
+            @submit.prevent="submitPrompt"
+            class="grid grid-cols-2 items-center justify-center gap-x-4 w-full mx-auto mb-10"
+    >
+        <div class="grid grid-cols-2 col-span-2 shadow-lg rounded-md bg-neutral-100 p-5">
+            <h2 class="col-span-2 text-xl font-medium text-center my-3">1. Select an Image (or use the default)</h2>
+            <input
+                    type="file"
+                    accept=".jpg,.jpeg,.png"
+                    @change="handleImageChange"
+                    class="px-3 py-3 col-span-2 my-2 text-md bg-white border rounded-md border-neutral-300 ring-offset-background placeholder:text-neutral-500 focus:border-neutral-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-neutral-400 disabled:cursor-not-allowed disabled:opacity-50 text-center"
+            />
+
+            <h2 class="col-span-2 text-xl font-medium text-center mb-5">2. Select a Style</h2>
+            <select
+                    x-data
+                    x-model="model"
+                    x-init="$nextTick(() => { $el.focus(); });"
+                    type="text"
+                    class="w-full col-span-2 px-3 py-3 text-md bg-white border rounded-md border-neutral-300 ring-offset-background placeholder:text-neutral-500 focus:border-neutral-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-neutral-400 disabled:cursor-not-allowed disabled:opacity-50 text-center"
+            >
+                <option value="aniflatmixAnimeFlatColorStyle_v20.safetensors">Anime Flat Color</option>
+                <option value="photon_v1.safetensors">Photorealistic - Photon</option>
+                <option value="ghostmix_v20Bakedvae.safetensors">Cartoon - GhostMix</option>
+                <option value="majicmixFantasy_v30Vae.safetensors">majicMIX fantasy</option>
+                <option value="juggernaut_reborn.safetensors">Juggernaut</option>
+                <option value="cetusMix_Whalefall2.safetensors">Anime - Cetus-Mix</option>
+                <option value="etherBluMix_etherBlueMix6.safetensors">Ether Blu Mix</option>
+            </select>
+
+            <h2 class="col-span-2 text-xl font-medium text-center my-5"> 3. Provide a Prompt (optional)</h2>
+            <input
+                    x-data
+                    x-model="prompt"
+                    x-init="$nextTick(() => { $el.focus(); });"
+                    type="text"
+                    class="w-full col-span-2 px-3 py-3 text-md bg-white border rounded-md border-neutral-300 ring-offset-background placeholder:text-neutral-500 focus:border-neutral-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-neutral-400 disabled:cursor-not-allowed disabled:opacity-50 text-center"
+            />
+            <div class="col-span-2 flex items-center justify-center">
+                <h2 class="text-l font-medium text-center mt-5 mb-3 cursor-pointer rounded-md shadow-md p-2 bg-neutral-100 hover:bg-neutral-200"
+                    x-on:click="showAdvanced = !showAdvanced">toggle advanced settings</h2>
+            </div>
+            <div id="advancedSetting col-span-2" class="col-span-2 grid grid-cols-2 col-span-2" x-show="showAdvanced">
+                <div class="col-span-2 flex">
+                    <p class="text-center w-1/8"
+                       x-text="'creativity '+creativity + '%'"></p>
+                    <input type="range" min="0" max="100" value="50" id="myRange" x-data x-model="creativity"
+                           x-on:change="updateCannyCheckbox"
+                           class="flex-grow mx-5"/>
+
+                </div>
+
+                <div class="flex mt-4">
+                    <label class="text-center w-1/8">Guess Mode:</label>
+                    <input type="checkbox" id="guessMode" x-data x-model="guessMode"
+                           class="flex-grow mx-5"/>
+                    <label class="text-center w-1/8">Canny:</label>
+                    <input type="checkbox" id="canny" x-data x-model="canny"
+                           class="flex-grow mx-5"/>
+                </div>
+            </div>
+
+        </div>
+        <button
+                type="submit"
+                class="col-span-2 mt-5 items-center justify-center px-4 py-3 text-sm font-medium tracking-wide text-white transition-colors duration-200 rounded-md bg-neutral-950 hover:bg-neutral-900 focus:ring-2 focus:ring-offset-2 focus:ring-neutral-900 focus:shadow-outline focus:outline-none"
+                :disabled="loading"
+        >
+            <span x-show="!loading">Transfer</span>
+            <div class="animate-spin w-6 h-6 mx-3" x-show="loading">
+                <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="lucide lucide-loader-2"
+                >
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                </svg>
+            </div>
+        </button>
+    </form>
+
+    <div class="mx-auto w-full max-w-[768px] relative grid">
+        <div
+                style="padding-top: 100%"
+                x-show="loading"
+                class="absolute w-full h-full animate-pulse bg-neutral-100 rounded-md"
+        ></div>
+        <img
+                x-show="imageURL"
+                class="rounded-md self-center justify-self-center"
+                :src="imageURL"
+                x-on:click="switchDisplay"
+        />
+        <textarea
+               :value="extractedResult">
+        </textarea>
+    </div>
+
+
+
+
+    <button
+            class="w-full items-center justify-center px-4 py-3 text-sm font-medium tracking-wide text-white transition-colors duration-200 rounded-md bg-neutral-950 hover:bg-neutral-900 focus:ring-2 focus:ring-offset-2 focus:ring-neutral-900 focus:shadow-outline focus:outline-none"
+            :disabled="loading"
+            x-show="!loading && imageURL && submittedImageURL"
+            @click="switchDisplay"
+    >Compare</button>
+</div>
+
+<script>
+    function state() {
+        return {
+            prompt: "a beautiful Japanese temple, butterflies flying around",
+            creativity: 50,  // 0-100
+            init_image: null,
+            features: [],
+            submitted: "",
+            submittedFeatures: [],
+            loading: false,
+            extractedResult: "request not sent yet",
+            imageURL: "https://i.imgur.com/ASznLND.jpeg",
+            submittedImageURL: "",
+            recieveImageURL: "",
+            showAdvanced: false,
+            guessMode: false,
+            canny: false,
+            model: "aniflatmixAnimeFlatColorStyle_v20.safetensors",
+            async submitPrompt() {
+                if (!this.init_image){
+                    // if no image is selected, use the default image in imageURL and transform it to a file object
+                    const response = await fetch(this.imageURL);
+                    const blob = await response.blob();
+                    this.init_image = new File([blob], "default.jpg", {type: "image/jpeg"});
+                    this.submittedImageURL = this.imageURL;
+                }
+                this.submitted = this.prompt;
+                this.submittedFeatures = [...this.features];
+                this.loading = true;
+
+                const queryString = new URLSearchParams(
+                    this.features.map((f) => ["features", f])
+                ).toString();
+                // const res = await fetch(`/infer/${this.submitted}?${queryString}`);
+                // send with multipart/form-data
+                const formData = new FormData();
+                formData.append('init_image', this.init_image);
+                formData.append('prompt', this.prompt);
+                formData.append('guess_mode', this.guessMode);
+                formData.append('model_name', this.model);
+                formData.append('creativity', this.creativity);
+                formData.append('canny', this.canny);
+                this.imageURL = this.submittedImageURL;
+                this.extractedResult = "request sent, waiting for response...";
+                const res = await fetch(`/infer/`, {
+                    method: 'POST',
+                    body: formData
+                });
+                this.extractedResult = await res.text();
+
+                // const blob = await res.blob();
+                this.recieveImageURL = URL.createObjectURL(blob);
+                this.imageURL = this.recieveImageURL;
+                this.loading = false;
+            },
+            handleImageChange(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    this.init_image = file;
+                }
+                // set submittedImageURL to the image from the input selection
+                this.submittedImageURL = URL.createObjectURL(file);
+                this.imageURL = this.submittedImageURL;
+            },
+            switchDisplay() {
+                if(!this.recieveImageURL) return;
+                if (this.imageURL === this.recieveImageURL) {
+                    this.imageURL = this.submittedImageURL;
+                } else {
+                    this.imageURL = this.recieveImageURL;
+                }
+            },
+            updateCannyCheckbox() {
+                // if (this.creativity > 50) {
+                //     this.canny = false;
+                // } else {
+                //     this.canny = true;
+                // }
+            }
+        };
+    }
+</script>
+</body>
+</html>
