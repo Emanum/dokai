@@ -111,15 +111,15 @@
                 x-show="loading"
                 class="absolute w-full h-full animate-pulse bg-neutral-100 rounded-md"
         ></div>
+        <textarea
+                :value="extractedResult">
+        </textarea>
         <img
                 x-show="imageURL"
                 class="rounded-md self-center justify-self-center"
                 :src="imageURL"
                 x-on:click="switchDisplay"
         />
-        <textarea
-               :value="extractedResult">
-        </textarea>
     </div>
 
 
@@ -181,11 +181,6 @@
                     method: 'POST',
                     body: formData
                 });
-                this.extractedResult = await res.text();
-
-                // const blob = await res.blob();
-                this.recieveImageURL = URL.createObjectURL(blob);
-                this.imageURL = this.recieveImageURL;
                 this.loading = false;
             },
             handleImageChange(event) {

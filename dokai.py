@@ -64,6 +64,7 @@ def download_models():
     # run_async(download_file_with_tqdm, "https://civitai.com/api/download/models/256504",
     #           "etherBluMix_etherBlueMix6.safetensors")
 
+
 def run_async(func, *args, **kwargs):
     import threading
     thread = threading.Thread(target=func, args=args, kwargs=kwargs)
@@ -97,6 +98,7 @@ image = (
         "torchaudio",
         "transformers",
         "datasets",
+        "sentencepiece"
         # "invisible_watermark",
         # "transformers",
         # "accelerate",
@@ -114,10 +116,8 @@ stub = Stub("dokai", image=image)
 
 with image.imports():
     import re
-    from transformers import DonutProcessor, VisionEncoderDecoderModel
-    # from datasets import load_dataset
-    import torch
-
+    from diffusers.utils import load_image
+    from datasets import load_dataset
 
 
 # ## Load model and run inference
@@ -135,17 +135,14 @@ class Model:
         self.pipe = None
 
     def __enter__(self):
-        import torch
-        import re
-
         from transformers import DonutProcessor, VisionEncoderDecoderModel
         import torch
 
-        processor = DonutProcessor.from_pretrained("naver-clova-ix/donut-base-finetuned-cord-v2")
-        model = VisionEncoderDecoderModel.from_pretrained("naver-clova-ix/donut-base-finetuned-cord-v2")
+        self.processor = DonutProcessor.from_pretrained("naver-clova-ix/donut-base-finetuned-cord-v2")
+        self.model = VisionEncoderDecoderModel.from_pretrained("naver-clova-ix/donut-base-finetuned-cord-v2")
 
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        model.to(device)
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.model.to(self.device)
 
         # load_options = dict(
         #     torch_dtype=torch.float16,
@@ -209,28 +206,29 @@ class Model:
 
         # prepare decoder inputs
         task_prompt = "<s_cord-v2>"
-        decoder_input_ids = processor.tokenizer(task_prompt, add_special_tokens=False, return_tensors="pt").input_ids
+        decoder_input_ids = self.processor.tokenizer(task_prompt, add_special_tokens=False,
+                                                     return_tensors="pt").input_ids
 
-        pixel_values = processor(image, return_tensors="pt").pixel_values
+        pixel_values = self.processor(image, return_tensors="pt").pixel_values
 
-        outputs = model.generate(
-            pixel_values.to(device),
-            decoder_input_ids=decoder_input_ids.to(device),
-            max_length=model.decoder.config.max_position_embeddings,
-            pad_token_id=processor.tokenizer.pad_token_id,
-            eos_token_id=processor.tokenizer.eos_token_id,
+        outputs = self.model.generate(
+            pixel_values.to(self.device),
+            decoder_input_ids=decoder_input_ids.to(self.device),
+            max_length=self.model.decoder.config.max_position_embeddings,
+            pad_token_id=self.processor.tokenizer.pad_token_id,
+            eos_token_id=self.processor.tokenizer.eos_token_id,
             use_cache=True,
-            bad_words_ids=[[processor.tokenizer.unk_token_id]],
+            bad_words_ids=[[self.processor.tokenizer.unk_token_id]],
             return_dict_in_generate=True,
         )
 
-        sequence = processor.batch_decode(outputs.sequences)[0]
-        sequence = sequence.replace(processor.tokenizer.eos_token, "").replace(processor.tokenizer.pad_token, "")
+        sequence = self.processor.batch_decode(outputs.sequences)[0]
+        sequence = sequence.replace(self.processor.tokenizer.eos_token, "").replace(self.processor.tokenizer.pad_token,
+                                                                                    "")
         sequence = re.sub(r"<.*?>", "", sequence, count=1).strip()  # remove first task start token
-        print(processor.token2json(sequence))
-
-
-
+        res = self.processor.token2json(sequence)
+        print(res)
+        return res
 
         # import io
         #
@@ -294,8 +292,9 @@ def app():
         canny = form["canny"]
 
         res = Model().inference.remote(prompt, init_image, guess_mode, canny, model_name, creativity)
-
-        return Response(res, media_type="text/plain")
+        print(f"Response: {res}")
+        # transform dict to string
+        return Response(str(res), media_type="text/plain")
 
     web_app.mount(
         "/", fastapi.staticfiles.StaticFiles(directory="/assets", html=True)
