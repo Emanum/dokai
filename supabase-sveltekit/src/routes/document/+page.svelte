@@ -3,6 +3,8 @@
     import { enhance } from "$app/forms";
     import type { SubmitFunction } from "@sveltejs/kit";
     import { createEventDispatcher } from "svelte";
+    import documentEntry from "./DocumentEntry.svelte";
+    import DocumentEntry from "./DocumentEntry.svelte";
 
     export let data;
     export let form;
@@ -57,7 +59,7 @@
 
     <div style="width: {size}em;">
         <label class="button primary block" for="single">
-            {uploading ? "Uploading ..." : "Upload"}
+            {uploading ? "Uploading ..." : "Upload new Document"}
         </label>
         <input
                 style="visibility: hidden; position:absolute;"
@@ -69,5 +71,18 @@
                 disabled={uploading}
         />
     </div>
+
+    <div>
+        <h2>Documents</h2>
+        <ul>
+            {#each documents as document}
+                <li>
+                    <DocumentEntry {supabase} document_entry={document} />
+                </li>
+            {/each}
+        </ul>
+    </div>
+
+
 
 </div>
