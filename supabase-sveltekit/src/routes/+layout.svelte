@@ -1,8 +1,8 @@
 <!-- src/routes/+layout.svelte -->
 <script lang="ts">
-	import '../styles.css'
 	import { invalidate } from '$app/navigation'
 	import { onMount } from 'svelte'
+	import { SvelteUIProvider } from '@svelteuidev/core';
 
 	export let data
 
@@ -21,9 +21,9 @@
 </script>
 
 <svelte:head>
-	<title>User Management</title>
+	<title>DOKAI</title>
 </svelte:head>
 
-<div class="container" style="padding: 50px 0 100px 0">
+<SvelteUIProvider withNormalizeCSS withGlobalStyle>
 	<slot />
-</div>
+</SvelteUIProvider>
