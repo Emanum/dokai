@@ -21,6 +21,17 @@
         }
     }
 
+    const removeDocument = async () => {
+        let user = await supabase.auth.getUser();
+        let path = `${user.data.user?.id}/${document_entry.name}`
+        const {data, error} = await supabase.storage.from('documents').remove([path]);
+        if (error) {
+            console.error('Error removing document', error);
+        } else {
+            console.log('Document removed', data);
+        }
+    }
+
 </script>
 
 
@@ -36,4 +47,5 @@
         {/each}
     </ul>
     <button on:click={downloadDocument}>Download</button>
+    <button on:click={removeDocument}>Remove</button>
 </article>
